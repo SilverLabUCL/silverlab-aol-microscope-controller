@@ -1,0 +1,8 @@
+Most of the work in this folder is based on 
+- Peter Fiala code for creating a matlab CAPI (with some modifications to 
+  support more features, and have it working with the NI 17 version)
+- Clark Gaebel c pipe for fast data acquisition 
+  (see https://github.com/cgaebel/pipe). Code was modifed again to adjust
+  to our needs. 
+- Boris Marin, Geoffrey Evans and Antoine Valera modification of these
+  toolboxes for performance and implementation

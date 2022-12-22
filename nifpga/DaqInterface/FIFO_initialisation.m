@@ -128,9 +128,7 @@ classdef FIFO_initialisation < handle
                 %% If true, find the largest valid divisor for a frame size
                 if obj.auto_optimise_buffer_size && ~obj.skip_flush_and_triggers                % When doing skip_flush_and_triggers, we don't want to waste time on that function
                     %% Get largest divisor below buffer_max
-                    candidates                  = divisors(expected_total)              ;       % Find factors that would allow to finish frames
-                    best_factor_comb            = (candidates - obj.buffer_max)         ;       % Find the first divisor smaller than buffer max 1/2
-                    best_factor_comb            = max(candidates(best_factor_comb <= 0));       % Find the first divisor smaller than buffer max 2/2
+                    best_factor_comb            = obj.fast_divisors(expected_total)           ;       % Find factors that would allow to finish frames
                 else
                     best_factor_comb            = obj.buffer_max                        ;       % Without optimization, just use buffer max                 
                 end
@@ -319,6 +317,81 @@ classdef FIFO_initialisation < handle
             [~, ~, available(1)]        = obj.capi.Channel0.read(0 , 0, obj.timeout, obj)           ;   % Check how much data available in Channel 1 FIFO
             [~, ~, available(2)]        = obj.capi.Channel1.read(0 , 0, obj.timeout, obj)           ;   % Check how much data available in Channel 2 FIFO  
             [~, ~, available(3)]        = obj.capi.FIFOREFHOSTFRAME.read(0 , 0, obj.timeout, obj)   ;   % Check how much data available in HOST FIFO
+        end
+        
+        function [best_factor_comb, all_divisors] = fast_divisors(obj, n)   
+            %% Returns array of divisors of n
+            % -------------------------------------------------------------
+            % Syntax: 
+            %   [best_factor_comb, all_divisors] = obj.fast_divisors(obj) 
+            % -------------------------------------------------------------
+            % Inputs: 
+            %   n (INT)
+            %       The integer we want the divisors from (the number of
+            %       pixels)
+            % -------------------------------------------------------------
+            % Outputs: 
+            %   best_factor_comb (INT)
+            %       The largest divisor > frame size/2
+            %   all_divisors (1 X M INT)
+            %       All the divisors of N
+            % -------------------------------------------------------------
+            % Extra Notes: 
+            % Code, based on FEX post by Kevin McCoy. This
+            % variant of DIVISORS is 20-100x faster that matlab function.
+            % The results seem similar, and it doesn't require the Symbolic
+            % Math Toolbox.
+            % -------------------------------------------------------------
+            % Author(s):
+            %   Kevin McCoy?, Antoine Valera
+            %---------------------------------------------
+            % Revision Date:
+            %   22-12-2022
+
+            if ~isscalar(n)
+                error('n must be a scalar');
+            end
+            if n < 1
+                error('n must be positive integer');
+            end
+            if n == 1
+                all_divisors = 1;
+                return;
+            end
+            f               = factor(n);
+            pf              = unique(f);
+            for i = 1:length(pf)
+                m(i)                = sum(f == pf(i));
+            end
+            mi              = zeros(size(m));
+            all_divisors    = zeros(1,prod(m+1));
+            i               = 1;
+            carry           = 0;
+            while ~carry
+                all_divisors(i) = prod(pf.^mi);
+                i               = i + 1;
+                if mi(1) < m(1)
+                    mi(1)           = mi(1) + 1;
+                else
+                    mi(1)           = 0;
+                    carry           = 1;
+                end
+                for j = 2:length(m)
+                    if carry
+                        if mi(j) < m(j)
+                            mi(j)       = mi(j) + 1;
+                            carry       = 0;
+                        else
+                            mi(j)       = 0;
+                            carry       = 1;
+                        end
+                    end
+                end
+            end
+            all_divisors = sort(all_divisors);
+            
+            best_factor_comb            = (all_divisors - obj.buffer_max)         ;       % Find the first divisor smaller than buffer max 1/2
+            best_factor_comb            = max(all_divisors(best_factor_comb <= 0));       % Find the first divisor smaller than buffer max 2/2
         end
     end
 end

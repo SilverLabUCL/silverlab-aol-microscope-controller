@@ -21,6 +21,11 @@ The documentation is under development. You will find different documentation so
 
 Please open an issue if you have any specific request
 
+## Code Map
+
+[![Visualization of the codebase](./diagram.svg)](https://octo-repo-visualization.vercel.app/?repo=SilverLabUCL%2Fsilverlab-aol-microscope-controller)
+[View interactive Diagram](https://octo-repo-visualization.vercel.app/?repo=SilverLabUCL%2Fsilverlab-aol-microscope-controller)
+
 # Future Developments
 
 A lot of features are under development in our lab and our partners labs, although they are still under testing. Many features, including a GUI will be published soon, but you can contact the developers if you need more information.
